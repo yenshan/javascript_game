@@ -1,0 +1,46 @@
+<html>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"
+            style="border:1px solid #000000; background-color: #000;"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const context = canvas.getContext('2d');
+
+        // ボール
+        const ballRadius = 10;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballSpeedX = 2;
+        let ballSpeedY = 2;
+
+        function drawBall() {
+            context.fillStyle = '#fff';
+            context.fillRect(ballX-ballRadius/2, ballY-ballRadius/2, ballRadius*2, ballRadius*2)
+        }
+
+        function update() {
+            // ボールの位置を更新
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // ボールが上下の壁に当たった場合の処理
+            if (ballY + ballRadius > canvas.height || ballY - ballRadius < 0) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            if (ballX - ballRadius < 0 || ballX + ballRadius > canvas.width) {
+                ballSpeedX = -ballSpeedX;
+            }
+        }
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall();
+            update();
+        }
+
+        setInterval(draw, 10);
+    </script>
+</body>
+</html>
+
