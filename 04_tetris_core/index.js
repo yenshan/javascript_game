@@ -7,14 +7,6 @@ const BLOCK_SIZE = 20
 
 let screen = Array(SCREEN_H*SCREEN_W);
 
-// ゲーム状態管理
-const State = {
-    STANBY: 0,
-    GAME: 1,
-    GAME_OVER: 2
-}
-let gameState = State.STANBY;
-
 // ブロック
 let blockX = 5;
 let blockY = 0;
@@ -27,18 +19,14 @@ document.addEventListener('keydown', keyDownHandler, false);
 
 function keyDownHandler(event) {
     if (event.key === 'Left' || event.key === 'ArrowLeft') {
-        console.log( blockHit(blockX-1, blockY, blockShape));
-        if (blockX > 0) blockX -= 1;
+        if (!outOfArea(blockX-1, blockY, blockShape))
+            blockX -= 1;
     } 
 
     if (event.key === 'Right' || event.key === 'ArrowRight') {
-        if (blockX < SCREEN_W-1) blockX += 1;
+        if (!outOfArea(blockX+1, blockY, blockShape))
+            blockX += 1;
     }
-
-    if (event.key == 's') {
-        if (gameState == State.STANBY) gameState = State.GAME;
-    }
-    if (gameState == State.GAME_OVER) gameState = State.STANBY; 
 }
 
 function draw_block(x,y, fill=true) {
@@ -91,6 +79,15 @@ function doFuncOnShape(shape, f) {
     }
 }
 
+function outOfArea(x, y, shape) {
+    let flg = false;
+    doFuncOnShape(shape, function (i,j) {
+        if (x+i < 0 || x+i >= SCREEN_W || y+i >= SCREEN_H)
+            flg = true;
+    });
+    return flg;
+}
+
 function drawBlock(x, y, shape) {
     doFuncOnShape(shape, function (i,j) {
         draw_block(x+i, y+j);
@@ -110,6 +107,39 @@ function putBlock(x, y, shape) {
     doFuncOnShape(shape, function (i,j) {
         setBrick(x+i, y+j, 1);
     });
+}
+
+function copyLine(src, tgt) {
+    for (i = 0; i < SCREEN_W; i++) {
+        screen[i + tgt*SCREEN_W] = screen[i + src*SCREEN_W];
+    }
+}
+
+function deleteLine(line) {
+    for (j = line-1; j >= 0; j--) {
+        copyLine(j,j+1);
+    }
+}
+
+function lineIsComplete(line) {
+    for (i = 0; i < SCREEN_W-1; i++) {
+        if (screen[i + line*SCREEN_W]==0)
+            return false;
+    }
+    return true;
+}
+
+function checkLineComplete() {
+    do {
+        deleted_line = false;
+        for (j = SCREEN_H-1; j >=0 ; j--) {
+            if (lineIsComplete(j)) {
+                deleteLine(j);
+                j++;
+                deleted_line = true;
+            }
+        }
+    } while (deleted_line);
 }
 
 const WAIT_COUNT = 40;
@@ -133,6 +163,9 @@ function update() {
         blockY = 0;
         return;
     }
+
+    checkLineComplete(); 
+
     blockY += 1; 
 }
 
@@ -152,18 +185,6 @@ function draw() {
     drawScreen();
     drawBlock(blockX, blockY, blockShape);
     update();
-
-    switch (gameState) {
-    case State.STANBY:
-//        draw_text_center("Press 'S' Key to Start");
-        break;
-    case State.GAME:
-        update();
-        break;
-    case State.GAME_OVER:
- //       draw_text_center("Game Over!!");
-        break;
-    }
 }
 
 init();
