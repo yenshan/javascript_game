@@ -27,45 +27,40 @@ function keyDownHandler(event) {
         if (!outOfArea(blockX+1, blockY, blockShape))
             blockX += 1;
     }
+
+    if (event.key === 'd') {
+        if (!outOfArea(blockX, blockY+1, blockShape)
+            && !blockHit(blockX, blockY+1, blockShape))
+            blockY += 1;
+    }
+
+    if (event.key == 'r') {
+        init();
+    }
 }
 
-function draw_block(x,y, fill=true) {
-    if (fill) {
+function drawRect(x,y, block) {
+    context.strokeStyle = '#fff';
+    context.lineWidth = 2;
+    context.strokeRect((x+1) * BLOCK_SIZE, (y+1) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    
+    if (block==1) {
         context.fillStyle = '#fff'
         context.fillRect((x+1) * BLOCK_SIZE, (y+1) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    } else {
-        context.strokeStyle = '#fff';
-        context.lineWidth = 2;
-        context.strokeRect((x+1) * BLOCK_SIZE, (y+1) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
     }
-}
-
-function drawBrick(x, y) {
-    color = screen[x+y*SCREEN_W];
-    switch (color) {
-    case 0:
-        draw_block(x, y, false);
-        break;
-    default:
-        draw_block(x, y);
-        break;
-    }
-}
-
-function setBrick(x, y, color=1) {
-    screen[x + y*SCREEN_W] = color;
-}
-
-function hasBrick(x,y) {
-    return 0!=screen[x + y*SCREEN_W];
 }
 
 function drawScreen() {
     for (j = 0; j < SCREEN_H; j++) {
         for (i = 0; i < SCREEN_W; i++) {
-            drawBrick(i, j);
+            block = screen[ i + j*SCREEN_W ];
+            drawRect(i, j, block);
         }
     }
+}
+
+function hasBrick(x,y) {
+    return 0!=screen[x + y*SCREEN_W];
 }
 
 function doFuncOnShape(shape, f) {
@@ -90,36 +85,37 @@ function outOfArea(x, y, shape) {
 
 function drawBlock(x, y, shape) {
     doFuncOnShape(shape, function (i,j) {
-        draw_block(x+i, y+j);
+        drawRect(x+i, y+j, 1);
     });
 }
 
 function blockHit(x, y, shape) {
-    let flg = false;
-    doFuncOnShape(shape, function (i,j) {
-        if (hasBrick(x+i, y+j+1))
-            flg = true;
-    });
-    return flg;
+    // ブロックの形データ4 x 2を見ていく
+    for (j = 0; j < 2; j++) {
+        for (i = 0; i < 4; i++) {
+            if (shape[i+j*4]==1) {
+                if (hasBrick(x+i, y+j))
+                    return true;
+            }
+        }
+    }
+    return false;
 }
 
 function putBlock(x, y, shape) {
-    doFuncOnShape(shape, function (i,j) {
-        setBrick(x+i, y+j, 1);
-    });
-}
-
-function copyLine(src, tgt) {
-    for (i = 0; i < SCREEN_W; i++) {
-        screen[i + tgt*SCREEN_W] = screen[i + src*SCREEN_W];
+    // ブロックの形データ4 x 2を見ていく
+    for (j = 0; j < 2; j++) {
+        for (i = 0; i < 4; i++) {
+            if (shape[i+j*4]==1) {
+                setBrick(x+i, y+j, 1);
+            }
+        }
     }
 }
-
-function deleteLine(line) {
-    for (j = line-1; j >= 0; j--) {
-        copyLine(j,j+1);
-    }
+function setBrick(x, y, block) {
+    screen[x + y*SCREEN_W] = block;
 }
+
 
 function lineIsComplete(line) {
     for (i = 0; i < SCREEN_W-1; i++) {
@@ -142,6 +138,19 @@ function checkLineComplete() {
     } while (deleted_line);
 }
 
+function deleteLine(line) {
+    for (j = line-1; j >= 0; j--) {
+        copyLine(j,j+1);
+    }
+}
+
+function copyLine(src, tgt) {
+    for (i = 0; i < SCREEN_W; i++) {
+        screen[i + tgt*SCREEN_W] = screen[i + src*SCREEN_W];
+    }
+}
+
+
 const WAIT_COUNT = 40;
 let wait_count = 0;
 
@@ -158,8 +167,8 @@ function update() {
     if (is_in_interval(WAIT_COUNT))
         return;
 
-    if (blockHit(blockX, blockY, blockShape)) {
-        putBlock(blockX, blockY, blockShape);
+    if (blockHit(blockX, blockY+1, blockShape)) {
+        putBlock(blockX, blockY, blockShape); // ブロックを積み上げる
         blockY = 0;
         return;
     }
