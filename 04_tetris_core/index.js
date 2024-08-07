@@ -19,12 +19,14 @@ document.addEventListener('keydown', keyDownHandler, false);
 
 function keyDownHandler(event) {
     if (event.key === 'Left' || event.key === 'ArrowLeft') {
-        if (!outOfArea(blockX-1, blockY, blockShape))
+        if (!outOfArea(blockX-1, blockY, blockShape)
+            && !blockHit(blockX-1, blockY, blockShape))
             blockX -= 1;
     } 
 
     if (event.key === 'Right' || event.key === 'ArrowRight') {
-        if (!outOfArea(blockX+1, blockY, blockShape))
+        if (!outOfArea(blockX+1, blockY, blockShape)
+            && !blockHit(blockX+1, blockY, blockShape))
             blockX += 1;
     }
 
